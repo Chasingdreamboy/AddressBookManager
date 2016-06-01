@@ -11,11 +11,11 @@
 #import <AddressBookUI/AddressBookUI.h>
 
 typedef NS_ENUM(NSInteger, ContactCode) {
-    ContactCodeNormal,
-    ContactCodeDenied,
-    ContactCodeInvaild,
-    ContactCodeNoName,
-    ContactCodeNoPhone
+    ContactCodeNormal,//正常状态，操作成功
+    ContactCodeDenied,//没有访问权限
+    ContactCodeInvaild,//在属性选择页面没有选择电话，例如选择了共享联系人，发送短信或者打开邮箱等
+    ContactCodeNoName,//选定的电话没有对象的联系人姓名
+    ContactCodeNoPhone//选定的联系人没有电话号码
 };
 typedef void(^Result) (ContactCode code, id response);
 

@@ -7,8 +7,8 @@
 //
 
 #import <AddressBookUI/ABPeoplePickerNavigationController.h>
-#import <AddressBook/ABPerson.h>
-#import <AddressBookUI/ABPersonViewController.h>
+//#import <AddressBook/ABPerson.h>
+//#import <AddressBookUI/ABPersonViewController.h>
 #import <objc/runtime.h>
 #import "AddressBookManager.h"
 
@@ -29,11 +29,12 @@ const char blockKey;
 #pragma OpenMethod
 + (void)selectContactWithBlock:(Result)result {
     [self resetManager];
+    //检查是否具有通讯录访问权限
     [self askAuthorityForAddressBookWithSuccess:^(bool granted, ABAddressBookRef addressBook) {
         if (granted) {
             objc_setAssociatedObject([self sharedInstance], &blockKey, result, OBJC_ASSOCIATION_COPY);
             ABPeoplePickerNavigationController *picker = [self sharedInstance].picker;
-            UIViewController *vc = [self getCurrentViewController];
+            UIViewController *vc = [self getCurrentViewController];//获取当前应用中正在显示的控制器
             [vc presentViewController:picker animated:YES completion:^{
                 
             }];
@@ -71,21 +72,18 @@ const char blockKey;
                         NSRange rangeTwo = [label rangeOfString:@">"];
                         NSString *type = [label substringWithRange:NSMakeRange(rangeOne.location + 1, rangeTwo.location - rangeOne.location - 1)];
                         [personInfo setObject:phone forKey:[NSString stringWithFormat:@"phone<%@>", type]];
-
                     }
                 //处理邮箱
                     ABMutableMultiValueRef emails = ABRecordCopyValue(person, kABPersonEmailProperty);
                     for (int j = 0; j < ABMultiValueGetCount(emails); j++) {
                         NSString *email = (__bridge NSString *)ABMultiValueCopyValueAtIndex(emails, j);
                         NSString *label = (__bridge  NSString *)ABMultiValueCopyLabelAtIndex(emails, j);
-                        if ([label containsString:@"<"]) {
+                        if ([label rangeOfString:@"<"].location != NSNotFound) {
                             NSRange rangeOne = [label rangeOfString:@"<"];
                             NSRange rangeTwo = [label rangeOfString:@">"];
                             NSString *type = [label substringWithRange:NSMakeRange(rangeOne.location + 1, rangeTwo.location - rangeOne.location - 1)];
-                            
                             [personInfo setObject:email forKey:[NSString stringWithFormat:@"email<%@>", type]];
                         }
-                        
                     }
                     //处理创建时间
                     NSString *creationDate = (__bridge NSString *)ABRecordCopyValue(person, kABPersonCreationDateProperty);
@@ -106,22 +104,14 @@ const char blockKey;
                         NSString *street = address[@"Street"];
                         NSString *addressString = [NSString stringWithFormat:@"%@%@%@", country ? : @"", city ? : @"", street ? : @""];
                         [personInfo setObject:addressString forKey:@"address"];
-//                        NSLog(@"address = %@", address);
                     }
-                    
-        
-                    
                 }
                 [contacts addObject:personInfo];
-                
             }
             result(ContactCodeNormal, contacts);
-            
         } else {
-            
         }
     }];
-    
 }
 
 #pragma ask for authority
@@ -172,7 +162,7 @@ const char blockKey;
 }
 #pragma iOS7
 -(BOOL)peoplePickerNavigationController:(ABPeoplePickerNavigationController *)peoplePicker shouldContinueAfterSelectingPerson:(ABRecordRef)person {
-    return YES;
+    return YES;//返回YES，允许显示被选择联系人的详细信息，例如电话号码，邮箱，家庭住址等。
 }
 - (BOOL)peoplePickerNavigationController:(ABPeoplePickerNavigationController *)peoplePicker shouldContinueAfterSelectingPerson:(ABRecordRef)person property:(ABPropertyID)property identifier:(ABMultiValueIdentifier)identifier {
     Result result = objc_getAssociatedObject(self, &blockKey);
@@ -218,16 +208,28 @@ const char blockKey;
     });
     return manager;
 }
+/**
+ *  重置单例对象
+ */
 + (void)resetManager {
     manager = nil;
     onceToken = 0;
 }
-
+/**
+ *  获取应用当前正在显示的控制器
+ *
+ *  @return 当前正在显示的控制器
+ */
 + (UIViewController *)getCurrentViewController {
     UIWindow *window = [UIApplication sharedApplication].keyWindow;
     return [window visibleViewController];
     
 }
+/**
+ *  lazy load
+ *
+ *  @return 创建一个ABPeoplePickerNavigationController对象
+ */
 - (ABPeoplePickerNavigationController *)picker {
     if (!_picker) {
         _picker = [[ABPeoplePickerNavigationController alloc] init];
@@ -262,5 +264,4 @@ const char blockKey;
         }
     }
 }
-
 @end
