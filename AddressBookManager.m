@@ -141,7 +141,6 @@ const char blockKey;
             propertyName = (__bridge NSString *)ABRecordCopyValue(person, properties[i]);
             propertyName = NULL_TO_NIL(propertyName);
             fullName = [NSString stringWithFormat:@"%@%@", fullName ? : @"",propertyName ? :@""];
-             NSLog(@"full name : %@", fullName);
         }
         
         ABMultiValueRef phone = ABRecordCopyValue(person, property);
@@ -176,7 +175,6 @@ const char blockKey;
         propertyName = (__bridge NSString *)ABRecordCopyValue(person, properties[i]);
         propertyName = NULL_TO_NIL(propertyName);
         fullName = [NSString stringWithFormat:@"%@%@", fullName ? : @"",propertyName ? :@""];
-        NSLog(@"full name : %@", fullName);
     }
     
     ABMultiValueRef phone = ABRecordCopyValue(person, property);
@@ -197,6 +195,10 @@ const char blockKey;
 #pragma ABPeopleNavigationControllerDelegate
 - (void)peoplePickerNavigationControllerDidCancel:(ABPeoplePickerNavigationController *)peoplePicker
 {
+    Result result = objc_getAssociatedObject(self, &blockKey);
+    if (result) {
+        result(ContactCodeCancel, @{});
+    }
     [peoplePicker dismissViewControllerAnimated:YES completion:^{
     }];
 }
